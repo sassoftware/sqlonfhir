@@ -1,0 +1,41 @@
+[project]
+name = "sqlonfhir"
+version = "0.0.1"
+authors = [
+  { name="Stuart Mackle", email="stuart.mackle@sas.com" },
+  { name="SAS Healthcare Solutions", email="support@sas.com" }
+]
+keywords = ["sqlonfhir", "fhir"]
+description = "Converts FHIR resources to flat formats using SQL on FHIR"
+dependencies = ["fhirpathpy~=2.1.0"]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+license = { file = "LICENSE.md" }
+
+[project.optional-dependencies]
+test = ["pytest==8.4.1"]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["tests.py"]
+
+[tool.uv.build-backend]
+module-name = "sqlonfhir"
+module-root = ""
+
+[build-system]
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.10",
+]
