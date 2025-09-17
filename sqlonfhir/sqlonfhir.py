@@ -159,9 +159,7 @@ def eval(resources, view_definition):
     for resource in resources:
         if resource["resourceType"] != view_definition["resource"]:
             continue
-        parsed = call_fn(norm, resource, view_definition)
-        if parsed != {}:
-            result += parsed
+        result += call_fn(norm, resource, view_definition)
     return result
 
 
