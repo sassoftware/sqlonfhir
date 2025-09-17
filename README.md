@@ -1,10 +1,10 @@
 # SASFHIR
 
-A Python implementation for evaluating SQL on FHIR view definitions against FHIR resources using FHIRPath expressions.
+A Python implementation that converts FHIR resources into tabular formats.
 
 ## Overview
 
-SASFHIR provides functionality to transform FHIR resources into tabular data structures based on SQL on FHIR view definitions. It extends the `fhirpathpy` library with custom functions and handles the conversion of FHIR resources into structured data that can be used for analytics and reporting.
+This library provides functionality to transform FHIR resources into tabular data structures based on SQL on FHIR view definitions. It extends the `fhirpathpy` library with custom functions and handles the conversion of FHIR resources into structured data that can be used for analytics and reporting.
 
 ## Features
 
@@ -30,7 +30,7 @@ pip install sqlonfhir
 ## Usage
 
 ```python
-from sqlonfhir import eval
+from sqlonfhir import evaluate
 
 # Define your view definition
 view_definition = {
@@ -51,7 +51,7 @@ resources = [
 ]
 
 # Evaluate the view
-result = eval(resources, view_definition)
+result = evaluate(resources, view_definition)
 print(result)
 ```
 
