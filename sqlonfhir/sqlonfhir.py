@@ -5,10 +5,6 @@ from fhirpathpy import evaluate
 from fhirpathpy.models import models
 
 
-def upper_first(string):
-    return string[:1].upper() + string[1:]
-
-
 # This is here to change identified.ofType(boolean) to identifiedBoolean.ofType(boolean)
 # This function should be replaced at some point as fhirpathpy and the SQL on FHIR specifications converge
 def escape_path(path):
@@ -204,9 +200,7 @@ def move_functions(view, function, sub_functions):
 
 
 def replace_constants(path, view_definition):
-    if "constant" not in view_definition:
-        return path
-    for constant in view_definition["constant"]:
+    for constant in view_definition.get("constant") or []:
         value_key = [vk for vk in constant.keys() if vk.startswith("value")]
         if "valueBoolean" in constant:
             path = path.replace(
