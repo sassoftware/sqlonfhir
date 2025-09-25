@@ -26,6 +26,9 @@ test = ["pytest==8.4.1"]
 minversion = "6.0"
 testpaths = ["tests"]
 python_files = ["tests.py"]
+pythonpath = [
+  "."
+]
 
 [tool.uv.build-backend]
 module-name = "sqlonfhir"
