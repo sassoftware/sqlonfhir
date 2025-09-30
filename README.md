@@ -1,10 +1,10 @@
-# SASFHIR
+# SQL on FHIR
 
 A Python implementation that converts FHIR resources into tabular formats.
 
 ## Overview
 
-This library provides functionality to transform FHIR resources into tabular data structures based on SQL on FHIR view definitions. It extends the `fhirpathpy` library with custom functions and handles the conversion of FHIR resources into structured data that can be used for analytics and reporting.
+This library provides functionality to transform FHIR resources into tabular data structures based on SQL on FHIR view definitions. It extends the `fhirpathpy` library with custom functions and handles the conversion of FHIR resources into structured data that can be used for analytics and reporting. This repository currently used the FHIR R4 specification.
 
 ## Features
 
@@ -57,7 +57,7 @@ print(result)
 
 ## API
 
-### `eval(resources, view_definition)`
+### `evaluate(resources, view_definition)`
 Main evaluation function that processes FHIR resources against a view definition.
 
 **Parameters:**
@@ -82,15 +82,15 @@ Generate test report:
 ## Project Structure
 
 ```
-sasfhir/
-├── sasfhir/
+sqlonfhir/
+├── sqlonfhir/
 │   ├── __init__.py
-│   └── sasfhir.py          # Main implementation
+│   └── sqlonfhir.py          # Main implementation
 ├── tests/
 │   ├── resources/          # Test FHIR resources and view definitions
-│   └── test.py             # Test suite
+│   └── tests.py             # Test suite
 ├── test_report/           # Test reporting utilities
-├── requirements.txt       # Dependencies
+├── pyproject.toml       # Project configuration
 └── README.md             # This file
 ```
 

@@ -6,6 +6,27 @@ from fhirpathpy.models import models
 
 
 def eval(resources, view_definition):
+    """Evaluate FHIR resources against a SQL on FHIR view definition.
+
+    Processes a list of FHIR resources and transforms into tabular data based
+    on the provided view definition.
+
+    Args:
+        resources: List of FHIR resource dictionaries to process.
+        view_definition: SQL on FHIR view definition specifying how to
+            extract data from the resources.
+
+    Returns:
+        List of dictionaries representing extracted tabular data where
+        each dictionary represents a row with column name/value pairs.
+
+    Example:
+        >>> resources = [{"resourceType": "Patient", "id": "123"}]
+        >>> view = {"resource": "Patient", "column": [{"name": "id", "path": "id"}]}
+        >>> eval(resources, view)
+        [{"id": "123"}]
+    """
+
     norm = normalize(view_definition)
     result = []
     evaluator = ViewDefinitionEvaluator()
