@@ -5,7 +5,7 @@ from fhirpathpy import compile
 from fhirpathpy.models import models
 
 
-def eval(resources, view_definition):
+def evaluate(resources, view_definition):
     """Evaluate FHIR resources against a SQL on FHIR view definition.
 
     Processes a list of FHIR resources and transforms into tabular data based
@@ -46,17 +46,18 @@ class ViewDefinitionEvaluator:
         # $this is not in the FHIRPath spec, replacing as per
         # reference implementation
         path = path.replace("$this", "identity()")
-        # Add functions to FHIRPath that are needed for SQL on FHIR
-        user_invocation_table = {
-            "getReferenceKey": {
-                "fn": self.get_reference_key,
-                "arity": {0: [], 1: ["Identifier"]},
-            },
-            "getResourceKey": {"fn": self.get_resource_key},
-            "identity": {"fn": self.identity},
-        }
 
         if path not in self.fhirpath_cache:
+            # Add functions to FHIRPath that are needed for SQL on FHIR
+            user_invocation_table = {
+                "getReferenceKey": {
+                    "fn": self.get_reference_key,
+                    "arity": {0: [], 1: ["Identifier"]},
+                },
+                "getResourceKey": {"fn": self.get_resource_key},
+                "identity": {"fn": self.identity},
+            }
+
             self.fhirpath_cache[path] = compile(
                 path,
                 model=models["r4"],
@@ -86,10 +87,10 @@ class ViewDefinitionEvaluator:
                 empty_record[column["name"]] = None
         if "select" in expression:
             for selection in expression["select"]:
-                empty_record = empty_record | self.get_all_child_columns(selection)
+                empty_record |= self.get_all_child_columns(selection)
         if "unionAll" in expression:
             for selection in expression["unionAll"]:
-                empty_record = empty_record | self.get_all_child_columns(selection)
+                empty_record |= self.get_all_child_columns(selection)
         return empty_record
 
     def for_each_or_null(self, expr, resource, view_definition):
