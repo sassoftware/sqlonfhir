@@ -23,15 +23,24 @@ def evaluate(resources, view_definition):
     Example:
         >>> resources = [{"resourceType": "Patient", "id": "123"}]
         >>> view = {"resource": "Patient", "column": [{"name": "id", "path": "id"}]}
-        >>> eval(resources, view)
+        >>> evaluate(resources, view)
         [{"id": "123"}]
     """
+
+    if len(resources) == 0:
+        return []
+
+    if "resource" not in view_definition:
+        raise Exception("View Definition is missing resource type.")
 
     norm = normalize(view_definition)
     result = []
     evaluator = ViewDefinitionEvaluator()
     for resource in resources:
-        if resource["resourceType"] != view_definition["resource"]:
+        if (
+            "resourceType" not in resource
+            or resource["resourceType"] != view_definition["resource"]
+        ):
             continue
         result += evaluator.call_fn(norm, resource, view_definition)
     return result
@@ -41,27 +50,24 @@ def evaluate(resources, view_definition):
 class ViewDefinitionEvaluator:
     def __init__(self):
         self.fhirpath_cache = {}
+        self.user_invocation_table = {
+            "getReferenceKey": {
+                "fn": self.get_reference_key,
+                "arity": {0: [], 1: ["Identifier"]},
+            },
+            "getResourceKey": {"fn": self.get_resource_key},
+            "identity": {"fn": self.identity},
+        }
 
     def eval_fhirpath(self, resource, path):
-        # $this is not in the FHIRPath spec, replacing as per
-        # reference implementation
-        path = path.replace("$this", "identity()")
-
         if path not in self.fhirpath_cache:
-            # Add functions to FHIRPath that are needed for SQL on FHIR
-            user_invocation_table = {
-                "getReferenceKey": {
-                    "fn": self.get_reference_key,
-                    "arity": {0: [], 1: ["Identifier"]},
-                },
-                "getResourceKey": {"fn": self.get_resource_key},
-                "identity": {"fn": self.identity},
-            }
-
+            # $this is not in the FHIRPath spec, replacing as per
+            # reference implementation
+            replaced_path = path.replace("$this", "identity()")
             self.fhirpath_cache[path] = compile(
-                path,
+                replaced_path,
                 model=models["r4"],
-                options={"userInvocationTable": user_invocation_table},
+                options={"userInvocationTable": self.user_invocation_table},
             )
 
         return self.fhirpath_cache[path](resource)
@@ -111,7 +117,7 @@ class ViewDefinitionEvaluator:
                 val = self.eval_fhirpath(resource, replaced_path)
                 if len(val) == 0 or not val[0]:
                     return []
-                elif type(val[0]) is not bool:
+                elif not isinstance(val[0], bool):
                     raise Exception("Where clause did not evaluate to boolean")
         sub_selections = []
         for selection in expr["select"]:
