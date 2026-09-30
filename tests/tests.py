@@ -327,3 +327,46 @@ def test_fn_boundary_cases(test_case):
     else:
         result = evaluate(resources, test_case["view"])
         assert result == test_case["expect"]
+
+
+def test_constant_name_is_prefix_of_other_constant():
+    """A constant whose name is a prefix of another constant's name must not
+    be substituted inside the longer name (e.g. %code_1 inside %code_10)."""
+    resources = [
+        {
+            "resourceType": "Patient",
+            "id": "pt1",
+            "name": [
+                {"use": "official", "family": "Smith"},
+                {"use": "nickname", "family": "Smithy"},
+            ],
+        }
+    ]
+    view = {
+        "resource": "Patient",
+        "status": "active",
+        "constant": [
+            {"name": "use_1", "valueString": "official"},
+            {"name": "use_10", "valueString": "nickname"},
+        ],
+        "select": [
+            {
+                "column": [
+                    {"name": "id", "path": "id", "type": "id"},
+                    {
+                        "name": "official_name",
+                        "path": "name.where(use = %use_1).family",
+                        "type": "string",
+                    },
+                    {
+                        "name": "nickname",
+                        "path": "name.where(use = %use_10).family",
+                        "type": "string",
+                    },
+                ]
+            }
+        ],
+    }
+    assert evaluate(resources, view) == [
+        {"id": "pt1", "official_name": "Smith", "nickname": "Smithy"}
+    ]
