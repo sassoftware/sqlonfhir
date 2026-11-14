@@ -1,6 +1,8 @@
 # Copyright © 2025, SAS Institute Inc., Cary, NC, USA. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import re
+
 from fhirpathpy import compile
 from fhirpathpy.models import models
 
@@ -198,33 +200,23 @@ def normalize(view, constants):
         view = move_functions(
             view, "select", current_functions - {"forEach", "select", "forEachOrNull"}
         )
-        view["select"] = [
-            normalize(selection, constants) for selection in view["select"]
-        ]
+        view["select"] = [normalize(selection, constants) for selection in view["select"]]
     elif "select" in view:
         view = move_functions(view, "select", current_functions - {"select"})
-        view["select"] = [
-            normalize(selection, constants) for selection in view["select"]
-        ]
+        view["select"] = [normalize(selection, constants) for selection in view["select"]]
         if "where" in view:
             for where_clause in view["where"]:
-                where_clause["path"] = replace_constants(
-                    where_clause["path"], constants
-                )
+                where_clause["path"] = replace_constants(where_clause["path"], constants)
     # if unionAll and column are present make sure it is evaluated as row_product(unionAll + column)
     # instead of union_all(column()). We also require select() to make sure both get evaluated
     # and union_all doesn't take precedence
     elif "unionAll" in view and "column" in view:
         view["select"] = []
         view = move_functions(view, "select", current_functions - {"select"})
-        view["select"] = [
-            normalize(selection, constants) for selection in view["select"]
-        ]
+        view["select"] = [normalize(selection, constants) for selection in view["select"]]
     elif "unionAll" in view:
         view = move_functions(view, "unionAll", current_functions - {"unionAll"})
-        view["unionAll"] = [
-            normalize(selection, constants) for selection in view["unionAll"]
-        ]
+        view["unionAll"] = [normalize(selection, constants) for selection in view["unionAll"]]
         validate_union_all(view["unionAll"])
     elif "column" in view:
         for column in view["column"]:
@@ -233,23 +225,33 @@ def normalize(view, constants):
 
 
 def replace_constants(path, constants):
-    for constant in constants:
+    """Replace %name references in a FHIRPath expression with constant values.
+
+    Each reference is matched on its full name, so a constant whose name is a
+    prefix of another one (e.g. ``%id_1`` and ``%id_10``) is not substituted
+    inside the longer name.
+    """
+    constants_by_name = {constant["name"]: constant for constant in constants}
+
+    def substitute(match):
+        constant = constants_by_name.get(match.group(1))
+        if constant is None:
+            return match.group(0)
         value_key = [vk for vk in constant.keys() if vk.startswith("value")]
         if "valueBoolean" in constant:
-            path = path.replace(
-                "%" + constant["name"], str(constant["valueBoolean"]).lower()
-            )
-        elif value_key[0] in [
+            return str(constant["valueBoolean"]).lower()
+        if value_key[0] in [
             "valueInteger",
             "valueDecimal",
             "valueUnsignedInt",
             "valuePositiveInt",
         ]:
-            path = path.replace("%" + constant["name"], str(constant[value_key[0]]))
-        elif len(value_key) == 1:
-            path = path.replace(
-                "%" + constant["name"], "'" + constant[value_key[0]] + "'"
-            )
+            return str(constant[value_key[0]])
+        if len(value_key) == 1:
+            return "'" + constant[value_key[0]] + "'"
+        return match.group(0)
+
+    path = re.sub(r"%([A-Za-z_][A-Za-z0-9_]*)", substitute, path)
     # $this is not in the FHIRPath spec, replacing as per reference implementation
     replaced_path = path.replace("$this", "identity()")
     return replaced_path
